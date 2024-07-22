@@ -373,11 +373,13 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False,
         )
         createAiPolygonMode.changed.connect(
-            lambda: self.canvas.initializeAiModel(
-                name=self._selectAiModelComboBox.currentText()
+            lambda: (
+                self.canvas.initializeAiModel(
+                    name=self._selectAiModelComboBox.currentText()
+                )
+                if self.canvas.createMode == "ai_polygon"
+                else None
             )
-            if self.canvas.createMode == "ai_polygon"
-            else None
         )
         createAiMaskMode = action(
             self.tr("Create AI-Mask"),
@@ -388,11 +390,13 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False,
         )
         createAiMaskMode.changed.connect(
-            lambda: self.canvas.initializeAiModel(
-                name=self._selectAiModelComboBox.currentText()
+            lambda: (
+                self.canvas.initializeAiModel(
+                    name=self._selectAiModelComboBox.currentText()
+                )
+                if self.canvas.createMode == "ai_mask"
+                else None
             )
-            if self.canvas.createMode == "ai_mask"
-            else None
         )
         editMode = action(
             self.tr("Edit Polygons"),
@@ -802,11 +806,13 @@ class MainWindow(QtWidgets.QMainWindow):
             model_index = 0
         self._selectAiModelComboBox.setCurrentIndex(model_index)
         self._selectAiModelComboBox.currentIndexChanged.connect(
-            lambda: self.canvas.initializeAiModel(
-                name=self._selectAiModelComboBox.currentText()
+            lambda: (
+                self.canvas.initializeAiModel(
+                    name=self._selectAiModelComboBox.currentText()
+                )
+                if self.canvas.createMode in ["ai_polygon", "ai_mask"]
+                else None
             )
-            if self.canvas.createMode in ["ai_polygon", "ai_mask"]
-            else None
         )
 
         self.tools = self.toolbar("Tools")
@@ -1365,9 +1371,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     description=s.description,
                     shape_type=s.shape_type,
                     flags=s.flags,
-                    mask=None
-                    if s.mask is None
-                    else utils.img_arr_to_b64(s.mask.astype(np.uint8)),
+                    mask=(
+                        None
+                        if s.mask is None
+                        else utils.img_arr_to_b64(s.mask.astype(np.uint8))
+                    ),
                 )
             )
             return data
@@ -1967,7 +1975,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def deleteFile(self):
         mb = QtWidgets.QMessageBox
         msg = self.tr(
-            "You are about to permanently delete this label file, " "proceed anyway?"
+            "You are about to permanently delete this label file, proceed anyway?"
         )
         answer = mb.warning(self, self.tr("Attention"), msg, mb.Yes | mb.No)
         if answer != mb.Yes:
@@ -1979,7 +1987,10 @@ class MainWindow(QtWidgets.QMainWindow):
             logger.info("Label file is removed: {}".format(label_file))
 
             item = self.fileListWidget.currentItem()
-            item.setCheckState(Qt.Unchecked)
+            if item is not None:
+                item.setCheckState(Qt.Unchecked)
+            else:
+                logger.warning("No current item selected in the file list widget.")
 
             self.resetState()
 
