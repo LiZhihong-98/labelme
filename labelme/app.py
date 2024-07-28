@@ -230,6 +230,7 @@ class MainWindow(QtWidgets.QMainWindow):
             "open",
             self.tr("Open Dir"),
         )
+
         openNextImg = action(
             self.tr("&Next Image"),
             self.openNextImg,
@@ -662,7 +663,15 @@ class MainWindow(QtWidgets.QMainWindow):
             zoomActions=zoomActions,
             openNextImg=openNextImg,
             openPrevImg=openPrevImg,
-            fileMenuActions=(open_, opendir, save, saveAs, close, quit),
+            fileMenuActions=(
+                open_,
+                opendir,
+                openRS,
+                save,
+                saveAs,
+                close,
+                quit,
+            ),  # 文件菜单
             tool=(),
             # XXX: need to add some actions here to activate the shortcut
             editMenu=(
