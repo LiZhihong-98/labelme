@@ -1,3 +1,12 @@
+"""
+Descripttion: 
+Author: Zhihong Li
+version: 
+Date: 2024-07-26 16:43:19
+LastEditors: Zhihong Li
+LastEditTime: 2024-07-29 13:53:10
+"""
+
 import numpy as np
 import os
 from PIL import Image
@@ -63,7 +72,7 @@ def stretchImg(imgPath, resultPath, extremum):
     outputImg.save(resultPath)
 
 
-def Batch_Convert_tif_to_jpg(imgdir, savedir):
+def Batch_Convert_tif_to_png(imgdir, savedir):
     # 获取文件夹下所有tif文件名称，并存入列表
     file_name_list = os.listdir(imgdir)
     extremum = getExtremum()
@@ -84,7 +93,7 @@ def Batch_Convert_tif_to_jpg(imgdir, savedir):
         stretchImg(img_path, savepath, extremum)
 
 
-if __name__ == "__main__":
-    imgdir = "./testData/tifTiles/"  # tif文件所在的【文件夹】
-    savedir = "./testData/GPCPNG/"  # 转为png后存储的【文件夹】
-    Batch_Convert_tif_to_jpg(imgdir, savedir)
+# if __name__ == "__main__":
+#     imgdir = "./testData/tifTiles/"  # tif文件所在的【文件夹】
+#     savedir = "./testData/GPCPNG/"  # 转为png后存储的【文件夹】
+#     Batch_Convert_tif_to_jpg(imgdir, savedir)

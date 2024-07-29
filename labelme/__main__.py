@@ -157,10 +157,10 @@ def main():
             output_dir = output
 
     translator = QtCore.QTranslator()
-    translator.load(
-        QtCore.QLocale.system().name(),
-        osp.dirname(osp.abspath(__file__)) + "/translate",
-    )
+    # translator.load(
+    #     QtCore.QLocale.system().name(),
+    #     osp.dirname(osp.abspath(__file__)) + "/translate",
+    # )
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName(__appname__)
     app.setWindowIcon(newIcon("icon"))

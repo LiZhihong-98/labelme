@@ -142,7 +142,12 @@ def main():
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3 :: Only",
         ],
-        package_data={"labelme": ["icons/*", "config/*.yaml", "translate/*"]},
+        package_data={
+            "labelme": [
+                "icons/*",
+                "config/*.yaml",
+            ]
+        },
         entry_points={
             "console_scripts": [
                 "rslabel=labelme.__main__:main",

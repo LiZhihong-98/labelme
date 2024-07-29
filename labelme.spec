@@ -14,7 +14,6 @@ a = Analysis(
     datas=[
         ('labelme/config/default_config.yaml', 'labelme/config'),
         ('labelme/icons/*', 'labelme/icons'),
-        ('labelme/translate/*.qm', 'translate'),
     ],
     hiddenimports=[],
     hookspath=[],

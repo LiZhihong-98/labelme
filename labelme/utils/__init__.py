@@ -1,3 +1,12 @@
+"""
+Descripttion: 
+Author: Zhihong Li
+version: 
+Date: 2024-07-21 16:09:18
+LastEditors: Zhihong Li
+LastEditTime: 2024-07-29 13:45:59
+"""
+
 # flake8: noqa
 
 from ._io import lblsave
@@ -27,3 +36,5 @@ from .qt import struct
 from .qt import distance
 from .qt import distancetoline
 from .qt import fmtShortcut
+
+from . import rs

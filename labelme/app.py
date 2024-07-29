@@ -230,7 +230,20 @@ class MainWindow(QtWidgets.QMainWindow):
             "open",
             self.tr("Open Dir"),
         )
-
+        openRSImg = action(
+            self.tr("Open RS Image"),
+            self.openRSImgDialog,
+            shortcuts["open_rsimg"],
+            "open",
+            self.tr("Open RS Image"),
+        )
+        clipRSImg = action(
+            self.tr("Clip RS Image"),
+            self.openRSImgDialog,
+            shortcuts["open_rsimg"],
+            "RSImg",
+            self.tr("Clip RS Image"),
+        )
         openNextImg = action(
             self.tr("&Next Image"),
             self.openNextImg,
@@ -666,7 +679,7 @@ class MainWindow(QtWidgets.QMainWindow):
             fileMenuActions=(
                 open_,
                 opendir,
-                openRS,
+                openRSImg,
                 save,
                 saveAs,
                 close,
@@ -742,6 +755,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 openNextImg,
                 openPrevImg,
                 opendir,
+                openRSImg,
+                clipRSImg,
                 self.menus.recentFiles,
                 save,
                 saveAs,
@@ -828,12 +843,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.tool = (
             open_,
             opendir,
+            None,  # 分割线
+            openRSImg,
+            clipRSImg,
+            openRSImg,
+            None,  # 分割线
             openPrevImg,
             openNextImg,
             save,
             deleteFile,
             None,
-            createMode,
+            createAiPolygonMode,
             editMode,
             duplicate,
             delete,
@@ -971,6 +991,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(title)
 
     def setClean(self):
+        print("setClean")
         self.dirty = False
         self.actions.save.setEnabled(False)
         self.actions.createMode.setEnabled(True)
@@ -2107,6 +2128,18 @@ class MainWindow(QtWidgets.QMainWindow):
             )
         )
         self.importDirImages(targetDirPath)
+
+    def openRSImgDialog(self, _value=False, dirpath=None):
+        options = QtWidgets.QFileDialog.Options()
+        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "选择文件", "", "遥感影像(*.tif; *tiff;*.jpg; *.png)", options=options
+        )
+
+        if file_path:
+            utils.rs.clip.test(file_path)
+            # with open(file_path, 'r', encoding='utf-8') as file:
+            #     content = file.read()
+            # self.text_edit.setPlainText(content)
 
     @property
     def imageList(self):

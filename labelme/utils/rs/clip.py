@@ -2,6 +2,15 @@
 Descripttion: 
 Author: Zhihong Li
 version: 
+Date: 2024-07-26 16:43:19
+LastEditors: Zhihong Li
+LastEditTime: 2024-07-29 13:46:25
+"""
+
+"""
+Descripttion: 
+Author: Zhihong Li
+version: 
 Date: 2024-02-29 16:38:42
 LastEditors: Zhihong Li
 LastEditTime: 2024-07-25 15:53:48
@@ -46,5 +55,9 @@ def clip_image(
     in_ds = None
 
 
+def test(path):
+    print(path)
+
+
 # Example usage:
-clip_image("./testData/GPC.tif", "./testData/tifTiles", 512, 512, overlap_percentage=20)
+# clip_image("./testData/GPC.tif", "./testData/tifTiles", 512, 512, overlap_percentage=20)
