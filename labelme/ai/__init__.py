@@ -1,7 +1,17 @@
+"""
+Descripttion: 
+Author: Zhihong Li
+version: 
+Date: 2024-07-21 16:09:18
+LastEditors: Zhihong Li
+LastEditTime: 2024-07-30 22:38:50
+"""
+
 import gdown
 
 from .efficient_sam import EfficientSam
 from .segment_anything_model import SegmentAnythingModel
+from .Sam2 import SegmentAnythingModel2
 
 
 class SegmentAnythingModelVitB(SegmentAnythingModel):
@@ -84,10 +94,30 @@ class EfficientSamVitS(EfficientSam):
         )
 
 
+class sam2_hiera_tiny(SegmentAnythingModel2):
+    name = "SegmentAnything2 (speed)"
+
+
+class sam2_hiera_small(SegmentAnythingModel2):
+    name = "SegmentAnything2 (Performance)"
+
+
+class sam2_hiera_base_plus(SegmentAnythingModel2):
+    name = "SegmentAnything2 (balanced)"
+
+
+class sam2_hiera_large(SegmentAnythingModel2):
+    name = "SegmentAnything2 (accuracy)"
+
+
 MODELS = [
     SegmentAnythingModelVitB,
     SegmentAnythingModelVitL,
     SegmentAnythingModelVitH,
     EfficientSamVitT,
     EfficientSamVitS,
+    sam2_hiera_tiny,
+    sam2_hiera_small,
+    sam2_hiera_base_plus,
+    sam2_hiera_large,
 ]

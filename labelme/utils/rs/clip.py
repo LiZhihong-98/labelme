@@ -53,11 +53,3 @@ def clip_image(
             num += 1
 
     in_ds = None
-
-
-def test(path):
-    print(path)
-
-
-# Example usage:
-# clip_image("./testData/GPC.tif", "./testData/tifTiles", 512, 512, overlap_percentage=20)

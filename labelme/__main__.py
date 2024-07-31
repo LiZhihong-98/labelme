@@ -8,6 +8,8 @@ import sys
 import yaml
 from qtpy import QtCore
 from qtpy import QtWidgets
+from qtpy import QtGui
+
 
 from labelme import __appname__
 from labelme import __version__
@@ -165,6 +167,8 @@ def main():
     app.setApplicationName(__appname__)
     app.setWindowIcon(newIcon("icon"))
     app.installTranslator(translator)
+    font = QtGui.QFont("Arial", 10)  # 使用 Arial 字体，大小为 12
+    app.setFont(font)
     win = MainWindow(
         config=config,
         filename=filename,

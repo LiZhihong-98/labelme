@@ -6,7 +6,7 @@ class ToolBar(QtWidgets.QToolBar):
     def __init__(self, title):
         super(ToolBar, self).__init__(title)
         layout = self.layout()
-        m = (0, 0, 0, 0)
+        m = (3, 0, 0, 0)
         layout.setSpacing(0)
         layout.setContentsMargins(*m)
         self.setContentsMargins(*m)
@@ -18,6 +18,9 @@ class ToolBar(QtWidgets.QToolBar):
         btn = QtWidgets.QToolButton()
         btn.setDefaultAction(action)
         btn.setToolButtonStyle(self.toolButtonStyle())
+
+        # 设置按钮的最小宽度
+        btn.setMinimumWidth(100)  # 这里的100可以根据需要调整
         self.addWidget(btn)
 
         # center align

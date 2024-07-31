@@ -62,6 +62,7 @@ class Canvas(QtWidgets.QWidget):
         )
         super(Canvas, self).__init__(*args, **kwargs)
         # Initialise local state.
+        self.setStyleSheet("background-color: #1a1c1f;")
         self.mode = self.EDIT
         self.shapes = []
         self.shapesBackups = []

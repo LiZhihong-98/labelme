@@ -33,6 +33,8 @@ from labelme.widgets import LabelListWidgetItem
 from labelme.widgets import ToolBar
 from labelme.widgets import UniqueLabelQListWidget
 from labelme.widgets import ZoomWidget
+from labelme.widgets import ClipDialog
+from labelme.widgets import ConvertDialog
 
 from . import utils
 
@@ -88,6 +90,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
+        # self.setStyleSheet("background-color: #000000;")
 
         # Whether we need to save or not.
         self.dirty = False
@@ -231,18 +234,25 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Open Dir"),
         )
         openRSImg = action(
-            self.tr("Open RS Image"),
+            self.tr("Open RSImage"),
             self.openRSImgDialog,
             shortcuts["open_rsimg"],
-            "open",
-            self.tr("Open RS Image"),
+            "RSImgBlue",
+            self.tr("Open RSImage"),
         )
         clipRSImg = action(
-            self.tr("Clip RS Image"),
-            self.openRSImgDialog,
+            self.tr("Clip RSImage"),
+            self.openClipRSImgDialog,
             shortcuts["open_rsimg"],
-            "RSImg",
-            self.tr("Clip RS Image"),
+            "clip",
+            self.tr("Clip RSImage"),
+        )
+        convertRSImg = action(
+            self.tr("Convert RSImage"),
+            self.openConvertRSImgDialog,
+            shortcuts["open_rsimg"],
+            "convert",
+            self.tr("Convert RSImage"),
         )
         openNextImg = action(
             self.tr("&Next Image"),
@@ -757,6 +767,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 opendir,
                 openRSImg,
                 clipRSImg,
+                convertRSImg,
                 self.menus.recentFiles,
                 save,
                 saveAs,
@@ -846,7 +857,7 @@ class MainWindow(QtWidgets.QMainWindow):
             None,  # 分割线
             openRSImg,
             clipRSImg,
-            openRSImg,
+            convertRSImg,
             None,  # 分割线
             openPrevImg,
             openNextImg,
@@ -1887,14 +1898,14 @@ class MainWindow(QtWidgets.QMainWindow):
         filters = self.tr("Image & Label files (%s)") % " ".join(
             formats + ["*%s" % LabelFile.suffix]
         )
-        fileDialog = FileDialogPreview(self)
-        fileDialog.setFileMode(FileDialogPreview.ExistingFile)
-        fileDialog.setNameFilter(filters)
-        fileDialog.setWindowTitle(
-            self.tr("%s - Choose Image or Label file") % __appname__,
+        fileDialog = QtWidgets.QFileDialog(
+            self, self.tr("%s - Choose Image or Label file") % __appname__
         )
-        fileDialog.setWindowFilePath(path)
-        fileDialog.setViewMode(FileDialogPreview.Detail)
+        fileDialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
+        fileDialog.setNameFilter(filters)
+        fileDialog.setDirectory(path)
+        fileDialog.setViewMode(QtWidgets.QFileDialog.Detail)
+
         if fileDialog.exec_():
             fileName = fileDialog.selectedFiles()[0]
             if fileName:
@@ -1995,6 +2006,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.saveAs.setEnabled(False)
 
     def getLabelFile(self):
+        if self.filename is None:
+            return None
+
         if self.filename.lower().endswith(".json"):
             label_file = self.filename
         else:
@@ -2012,6 +2026,10 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         label_file = self.getLabelFile()
+        if label_file is None:
+            logger.warning("No label file path returned by getLabelFile.")
+
+            return
         if osp.exists(label_file):
             os.remove(label_file)
             logger.info("Label file is removed: {}".format(label_file))
@@ -2021,6 +2039,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 item.setCheckState(Qt.Unchecked)
             else:
                 logger.warning("No current item selected in the file list widget.")
+                self.setClean()
 
             self.resetState()
 
@@ -2136,10 +2155,18 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         if file_path:
-            utils.rs.clip.test(file_path)
+            print(file_path)
             # with open(file_path, 'r', encoding='utf-8') as file:
             #     content = file.read()
-            # self.text_edit.setPlainText(content)
+            # self.text_edit.setPlainText(content)  def open_tile_dialog(self):
+
+    def openClipRSImgDialog(self, _value=False):
+        dialog = ClipDialog(self)
+        dialog.exec_()
+
+    def openConvertRSImgDialog(self, _value=False):
+        dialog = ConvertDialog(self)
+        dialog.exec_()
 
     @property
     def imageList(self):

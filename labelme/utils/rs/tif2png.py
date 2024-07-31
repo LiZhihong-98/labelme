@@ -36,7 +36,7 @@ def readTif(imgPath, bandsOrder=[3, 2, 1]):
 
 def getExtremum():
     extremum = []
-    origin_tif = readTif(r"D:\AI\RemoteSensing\DatasetHandle\utils\testData\GPC.tif")
+    origin_tif = readTif(r"E:\AI\Remote Sensing\Data\GPC.tif")
     band_Num = origin_tif.shape[2]  # 数组第三维度的大小，在这里是图像的通道数
     for i in range(band_Num):
         oneband_data = origin_tif[:, :, i]
