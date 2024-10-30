@@ -34,9 +34,9 @@ def readTif(imgPath, bandsOrder=[3, 2, 1]):
     return data
 
 
-def getExtremum():
+def getExtremum(original_image):
     extremum = []
-    origin_tif = readTif(r"E:\AI\Remote Sensing\Data\GPC.tif")
+    origin_tif = readTif(original_image)
     band_Num = origin_tif.shape[2]  # 数组第三维度的大小，在这里是图像的通道数
     for i in range(band_Num):
         oneband_data = origin_tif[:, :, i]
@@ -72,10 +72,10 @@ def stretchImg(imgPath, resultPath, extremum):
     outputImg.save(resultPath)
 
 
-def Batch_Convert_tif_to_png(imgdir, savedir):
+def Batch_Convert_tif_to_png(original_image, imgdir, savedir):
     # 获取文件夹下所有tif文件名称，并存入列表
     file_name_list = os.listdir(imgdir)
-    extremum = getExtremum()
+    extremum = getExtremum(original_image)
 
     if not os.path.exists(savedir):
         os.makedirs(savedir)
