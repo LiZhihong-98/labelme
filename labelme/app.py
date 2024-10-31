@@ -132,9 +132,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.uniqLabelList = UniqueLabelQListWidget()
         self.uniqLabelList.setToolTip(
-            self.tr(
-                "Select label to start annotating for it. " "Press 'Esc' to deselect."
-            )
+            self.tr("选择标签以开始进行标注。" "按'Esc'键取消选择。")
         )
         if self._config["labels"]:
             for label in self._config["labels"]:
@@ -213,7 +211,7 @@ class MainWindow(QtWidgets.QMainWindow):
         action = functools.partial(utils.newAction, self)
         shortcuts = self._config["shortcuts"]
         quit = action(
-            self.tr("&Quit"),
+            self.tr("退出"),
             self.close,
             shortcuts["quit"],
             "quit",
@@ -855,7 +853,7 @@ class MainWindow(QtWidgets.QMainWindow):
             open_,
             opendir,
             None,  # 分割线
-            openRSImg,
+            # openRSImg,
             clipRSImg,
             convertRSImg,
             None,  # 分割线
@@ -866,10 +864,10 @@ class MainWindow(QtWidgets.QMainWindow):
             None,
             createAiMaskMode,
             editMode,
-            duplicate,
+            # duplicate,
             delete,
             undo,
-            brightnessContrast,
+            # brightnessContrast,
             None,
             fitWindow,
             zoom,
@@ -1399,6 +1397,64 @@ class MainWindow(QtWidgets.QMainWindow):
             item.setCheckState(Qt.Checked if flag else Qt.Unchecked)
             self.flag_widget.addItem(item)
 
+    # def saveLabels(self, filename):
+    #     lf = LabelFile()
+
+    #     def format_shape(s):
+    #         data = s.other_data.copy()
+    #         data.update(
+    #             dict(
+    #                 label=s.label.encode("utf-8") if PY2 else s.label,
+    #                 points=[(p.x(), p.y()) for p in s.points],
+    #                 group_id=s.group_id,
+    #                 description=s.description,
+    #                 shape_type=s.shape_type,
+    #                 flags=s.flags,
+    #                 mask=(
+    #                     None
+    #                     if s.mask is None
+    #                     else utils.img_arr_to_b64(s.mask.astype(np.uint8))
+    #                 ),
+    #             )
+    #         )
+    #         return data
+
+    #     shapes = [format_shape(item.shape()) for item in self.labelList]
+    #     flags = {}
+    #     for i in range(self.flag_widget.count()):
+    #         item = self.flag_widget.item(i)
+    #         key = item.text()
+    #         flag = item.checkState() == Qt.Checked
+    #         flags[key] = flag
+    #     try:
+    #         imagePath = osp.relpath(self.imagePath, osp.dirname(filename))
+    #         imageData = self.imageData if self._config["store_data"] else None
+    #         if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
+    #             os.makedirs(osp.dirname(filename))
+    #         lf.save(
+    #             filename=filename,
+    #             shapes=shapes,
+    #             imagePath=imagePath,
+    #             imageData=imageData,
+    #             imageHeight=self.image.height(),
+    #             imageWidth=self.image.width(),
+    #             otherData=self.otherData,
+    #             flags=flags,
+    #         )
+    #         self.labelFile = lf
+    #         items = self.fileListWidget.findItems(self.imagePath, Qt.MatchExactly)
+    #         if len(items) > 0:
+    #             if len(items) != 1:
+    #                 raise RuntimeError("There are duplicate files.")
+    #             items[0].setCheckState(Qt.Checked)
+    #         # disable allows next and previous image to proceed
+    #         # self.filename = filename
+    #         return True
+    #     except LabelFileError as e:
+    #         self.errorMessage(
+    #             self.tr("Error saving label data"), self.tr("<b>%s</b>") % e
+    #         )
+    #         return False
     def saveLabels(self, filename):
         lf = LabelFile()
 
@@ -1428,8 +1484,16 @@ class MainWindow(QtWidgets.QMainWindow):
             key = item.text()
             flag = item.checkState() == Qt.Checked
             flags[key] = flag
+
         try:
-            imagePath = osp.relpath(self.imagePath, osp.dirname(filename))
+            # 检查 self.imagePath 和 filename 是否在同一个驱动器上
+            if osp.splitdrive(self.imagePath)[0] != osp.splitdrive(filename)[0]:
+                imagePath = self.imagePath  # 使用绝对路径
+            else:
+                imagePath = osp.relpath(
+                    self.imagePath, osp.dirname(filename)
+                )  # 使用相对路径
+
             imageData = self.imageData if self._config["store_data"] else None
             if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
                 os.makedirs(osp.dirname(filename))
@@ -1449,8 +1513,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 if len(items) != 1:
                     raise RuntimeError("There are duplicate files.")
                 items[0].setCheckState(Qt.Checked)
-            # disable allows next and previous image to proceed
-            # self.filename = filename
             return True
         except LabelFileError as e:
             self.errorMessage(
@@ -2018,27 +2080,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def deleteFile(self):
         mb = QtWidgets.QMessageBox
-        msg = self.tr(
-            "You are about to permanently delete this label file, proceed anyway?"
-        )
+        msg = self.tr("您即将永久删除此标签文件，是否继续？")
         answer = mb.warning(self, self.tr("Attention"), msg, mb.Yes | mb.No)
         if answer != mb.Yes:
             return
 
         label_file = self.getLabelFile()
         if label_file is None:
-            logger.warning("No label file path returned by getLabelFile.")
+            logger.warning("getLabelFile未返回标签文件路径。")
 
             return
         if osp.exists(label_file):
             os.remove(label_file)
-            logger.info("Label file is removed: {}".format(label_file))
+            logger.info("标签文件已被删除：{}".format(label_file))
 
             item = self.fileListWidget.currentItem()
             if item is not None:
                 item.setCheckState(Qt.Unchecked)
             else:
-                logger.warning("No current item selected in the file list widget.")
+                logger.warning("文件列表中未选择当前项目。")
                 self.setClean()
 
             self.resetState()
@@ -2047,8 +2107,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def hasLabels(self):
         if self.noShapes():
             self.errorMessage(
-                "No objects labeled",
-                "You must label at least one object to save the file.",
+                "没有对象被标注。",
+                "您必须标注至少一个对象才能保存文件。",
             )
             return False
         return True
@@ -2064,10 +2124,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.dirty:
             return True
         mb = QtWidgets.QMessageBox
-        msg = self.tr('Save annotations to "{}" before closing?').format(self.filename)
+        msg = self.tr('在关闭之前是否将标注保存到"{}"中？').format(self.filename)
         answer = mb.question(
             self,
-            self.tr("Save annotations?"),
+            self.tr("是否保存标注？"),
             msg,
             mb.Save | mb.Discard | mb.Cancel,
             mb.Save,
@@ -2104,11 +2164,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def deleteSelectedShape(self):
         yes, no = QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
-        msg = self.tr(
-            "You are about to permanently delete {} polygons, " "proceed anyway?"
-        ).format(len(self.canvas.selectedShapes))
+        msg = self.tr("您即将永久删除{}个多边形，是否继续？").format(
+            len(self.canvas.selectedShapes)
+        )
         if yes == QtWidgets.QMessageBox.warning(
-            self, self.tr("Attention"), msg, yes | no, yes
+            self, self.tr("注意"), msg, yes | no, yes
         ):
             self.remLabels(self.canvas.deleteSelected())
             self.setDirty()
