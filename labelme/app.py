@@ -1840,15 +1840,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.zoom_values[self.filename] = (self.zoomMode, value)
 
     def scaleFitWindow(self):
-        """Figure out the size of the pixmap to fit the main widget."""
+        # 检查 self.canvas.pixmap 是否已经被初始化
+        if self.canvas.pixmap is None:
+            # 如果 pixmap 还没有被初始化，返回默认的缩放比例（1），保持当前状态
+            return 1
+
+        # 计算中央窗口的宽度和高度，减去 e 以防止滚动条出现
         e = 2.0  # So that no scrollbars are generated.
         w1 = self.centralWidget().width() - e
         h1 = self.centralWidget().height() - e
         a1 = w1 / h1
-        # Calculate a new scale value based on the pixmap's aspect ratio.
+
+        # 获取 pixmap 的宽度和高度
         w2 = self.canvas.pixmap.width() - 0.0
         h2 = self.canvas.pixmap.height() - 0.0
         a2 = w2 / h2
+
+        # 根据中央窗口和 pixmap 的宽高比，选择合适的缩放比例
         return w1 / w2 if a2 >= a1 else h1 / h2
 
     def scaleFitWidth(self):
@@ -2082,6 +2090,7 @@ class MainWindow(QtWidgets.QMainWindow):
         mb = QtWidgets.QMessageBox
         msg = self.tr("您即将永久删除此标签文件，是否继续？")
         answer = mb.warning(self, self.tr("Attention"), msg, mb.Yes | mb.No)
+
         if answer != mb.Yes:
             return
 

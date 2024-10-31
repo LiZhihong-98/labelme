@@ -794,6 +794,9 @@ class Canvas(QtWidgets.QWidget):
         return point / self.scale - self.offsetToCenter()
 
     def offsetToCenter(self):
+        if self.pixmap is None or self.pixmap.isNull():
+            return QtCore.QPointF(0, 0)
+
         s = self.scale
         area = super(Canvas, self).size()
         w, h = self.pixmap.width() * s, self.pixmap.height() * s
@@ -803,8 +806,13 @@ class Canvas(QtWidgets.QWidget):
         return QtCore.QPointF(x, y)
 
     def outOfPixmap(self, p):
+        # 检查 pixmap 是否为空或未初始化
+        if self.pixmap is None or self.pixmap.isNull():
+            return True  # 如果 pixmap 无效，就认为超出范围
+
         w, h = self.pixmap.width(), self.pixmap.height()
         return not (0 <= p.x() <= w - 1 and 0 <= p.y() <= h - 1)
+
 
     def finalise(self):
         assert self.current
