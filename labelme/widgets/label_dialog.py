@@ -44,12 +44,14 @@ class LabelDialog(QtWidgets.QDialog):
 
         super(LabelDialog, self).__init__(parent)
         self.edit = LabelQLineEdit()
+        self.edit.setFont(QtGui.QFont("Arial", 14))
         self.edit.setPlaceholderText(text)
         self.edit.setValidator(labelme.utils.labelValidator())
         self.edit.editingFinished.connect(self.postProcess)
         if flags:
             self.edit.textChanged.connect(self.updateFlags)
         self.edit_group_id = QtWidgets.QLineEdit()
+        self.edit_group_id.setFont(QtGui.QFont("Arial", 14))
         self.edit_group_id.setPlaceholderText("Group ID")
         self.edit_group_id.setValidator(
             QtGui.QRegExpValidator(QtCore.QRegExp(r"\d*"), None)
@@ -60,6 +62,24 @@ class LabelDialog(QtWidgets.QDialog):
             layout_edit.addWidget(self.edit, 6)
             layout_edit.addWidget(self.edit_group_id, 2)
             layout.addLayout(layout_edit)
+
+        # Adding predefined label buttons
+        self.buttonLayout = QtWidgets.QHBoxLayout()
+        predefined_labels = [
+            ("防尘网", "Green Plastic Cover"),
+            ("地膜", "Plastic Mulch"),
+            ("大棚", "Greenhouse"),
+            ("彩钢房", "Color Steel Shed"),
+        ]
+        for label, english_label in predefined_labels:
+            button = QtWidgets.QPushButton(label)
+            button.clicked.connect(
+                lambda checked, text=english_label: self.setLabelText(text)
+            )
+            self.buttonLayout.addWidget(button)
+            # self.buttonLayout.setFont(QtGui.QFont("Arial", 14))
+        layout.addLayout(self.buttonLayout)
+
         # buttons
         self.buttonBox = bb = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
@@ -73,6 +93,7 @@ class LabelDialog(QtWidgets.QDialog):
         layout.addWidget(bb)
         # label_list
         self.labelList = QtWidgets.QListWidget()
+        self.labelList.setFont(QtGui.QFont("Arial", 14))
         if self._fit_to_content["row"]:
             self.labelList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         if self._fit_to_content["column"]:
@@ -99,6 +120,7 @@ class LabelDialog(QtWidgets.QDialog):
         self.edit.textChanged.connect(self.updateFlags)
         # text edit
         self.editDescription = QtWidgets.QTextEdit()
+        self.editDescription.setFont(QtGui.QFont("Arial", 14))
         self.editDescription.setPlaceholderText("Label description")
         self.editDescription.setFixedHeight(50)
         layout.addWidget(self.editDescription)
@@ -122,6 +144,9 @@ class LabelDialog(QtWidgets.QDialog):
             raise ValueError("Unsupported completion: {}".format(completion))
         completer.setModel(self.labelList.model())
         self.edit.setCompleter(completer)
+
+    def setLabelText(self, text):
+        self.edit.setText(text)
 
     def addLabelHistory(self, label):
         if self.labelList.findItems(label, QtCore.Qt.MatchExactly):

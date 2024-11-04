@@ -1257,7 +1257,10 @@ class MainWindow(QtWidgets.QMainWindow):
         item = items[0]
 
         if not self.mayContinue():
+            print("fileSelectionChanged: mayContinue() is False")
             return
+        else:
+            print("fileSelectionChanged: mayContinue() is True")
 
         currIndex = self.imageList.index(str(item.text()))
         if currIndex < len(self.imageList):
@@ -1870,7 +1873,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         if not self.mayContinue():
+            print("closeEvent: mayContinue() is False")
             event.ignore()
+        else:
+            print("closeEvent: mayContinue() is True")
         self.settings.setValue("filename", self.filename if self.filename else "")
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
@@ -1893,8 +1899,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def dropEvent(self, event):
         if not self.mayContinue():
+            print("dropEvent: mayContinue() == False")
             event.ignore()
             return
+        else:
+            print("dropEvent: mayContinue() == True")
         items = [i.toLocalFile() for i in event.mimeData().urls()]
         self.importDroppedImageFiles(items)
 
@@ -1902,7 +1911,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def loadRecent(self, filename):
         if self.mayContinue():
+            print("loadRecent: mayContinue() == True")
             self.loadFile(filename)
+        else:
+            print("loadRecent: mayContinue() == False")
 
     def openPrevImg(self, _value=False):
         keep_prev = self._config["keep_prev"]
@@ -1912,7 +1924,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self._config["keep_prev"] = True
 
         if not self.mayContinue():
+            print("openPrevImg: mayContinue() == False")
             return
+        else:
+            print("openPrevImg: mayContinue() == True")
 
         if len(self.imageList) <= 0:
             return
@@ -1920,11 +1935,18 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.filename is None:
             return
 
-        currIndex = self.imageList.index(self.filename)
-        if currIndex - 1 >= 0:
-            filename = self.imageList[currIndex - 1]
-            if filename:
-                self.loadFile(filename)
+        if self.filename not in self.imageList:
+            print(f"当前文件 '{self.filename}' 不在列表中，无法获取索引。")
+            return
+
+        try:
+            currIndex = self.imageList.index(self.filename)
+            if currIndex - 1 >= 0:
+                filename = self.imageList[currIndex - 1]
+                if filename:
+                    self.loadFile(filename)
+        except ValueError:
+            print(f"文件 '{self.filename}' 不在 imageList 中，可能未被加载或已被移除。")
 
         self._config["keep_prev"] = keep_prev
 
@@ -1936,7 +1958,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self._config["keep_prev"] = True
 
         if not self.mayContinue():
+            print("openNextImg: mayContinue() == False")
             return
+        else:
+            print("openNextImg: mayContinue() == True")
 
         if len(self.imageList) <= 0:
             return
@@ -1945,11 +1970,21 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.filename is None:
             filename = self.imageList[0]
         else:
-            currIndex = self.imageList.index(self.filename)
-            if currIndex + 1 < len(self.imageList):
-                filename = self.imageList[currIndex + 1]
-            else:
-                filename = self.imageList[-1]
+            if self.filename not in self.imageList:
+                print(f"当前文件 '{self.filename}' 不在列表中，无法获取索引。")
+                return
+
+            try:
+                currIndex = self.imageList.index(self.filename)
+                if currIndex + 1 < len(self.imageList):
+                    filename = self.imageList[currIndex + 1]
+                else:
+                    filename = self.imageList[-1]
+            except ValueError:
+                print(
+                    f"文件 '{self.filename}' 不在 imageList 中，可能未被加载或已被移除。"
+                )
+
         self.filename = filename
 
         if self.filename and load:
@@ -1958,8 +1993,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self._config["keep_prev"] = keep_prev
 
     def openFile(self, _value=False):
+
         if not self.mayContinue():
+            print("openFile: mayContinue() == False")
             return
+        else:
+            print("openFile: mayContinue() == True")
         path = osp.dirname(str(self.filename)) if self.filename else "."
         formats = [
             "*.{}".format(fmt.data().decode())
@@ -2068,7 +2107,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeFile(self, _value=False):
         if not self.mayContinue():
+            print("closeFile: mayContinue() == False")
             return
+        else:
+            print("closeFile: mayContinue() == True")
         self.resetState()
         self.setClean()
         self.toggleActions(False)
@@ -2198,7 +2240,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def openDirDialog(self, _value=False, dirpath=None):
         if not self.mayContinue():
+            print("openDirDialog: mayContinue() == False")
             return
+        else:
+            print("openDirDialog: mayContinue() == True")
 
         defaultOpenDirPath = dirpath if dirpath else "."
         if self.lastOpenDir and osp.exists(self.lastOpenDir):
@@ -2278,7 +2323,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.openPrevImg.setEnabled(True)
 
         if not self.mayContinue() or not dirpath:
+            print("importDirImages: mayContinue() == False")
             return
+        else:
+            print("importDirImages: mayContinue() == True")
 
         self.lastOpenDir = dirpath
         self.filename = None
