@@ -5,14 +5,16 @@ from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
 
+
 import labelme.utils
+from labelme.ai.qwen25 import generate_response
 from labelme.logger import logger
 
 QT5 = QT_VERSION[0] == "5"
 
 
-# TODO(unknown):
-# - Calculate optimal position so as not to go out of screen area.
+# TODO(未知):
+# - 计算优化的位置以保证不超出屏幕区域。
 
 
 class LabelQLineEdit(QtWidgets.QLineEdit):
@@ -63,7 +65,7 @@ class LabelDialog(QtWidgets.QDialog):
             layout_edit.addWidget(self.edit_group_id, 2)
             layout.addLayout(layout_edit)
 
-        # Adding predefined label buttons
+        # 添加预定义的标签按钮
         self.buttonLayout = QtWidgets.QHBoxLayout()
         predefined_labels = [
             ("防尘网", "Green Plastic Cover"),
@@ -74,24 +76,12 @@ class LabelDialog(QtWidgets.QDialog):
         for label, english_label in predefined_labels:
             button = QtWidgets.QPushButton(label)
             button.clicked.connect(
-                lambda checked, text=english_label: self.setLabelText(text)
+                lambda checked, text=english_label: self.setLabel(text)
             )
             self.buttonLayout.addWidget(button)
-            # self.buttonLayout.setFont(QtGui.QFont("Arial", 14))
         layout.addLayout(self.buttonLayout)
 
-        # buttons
-        self.buttonBox = bb = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
-            QtCore.Qt.Horizontal,
-            self,
-        )
-        bb.button(bb.Ok).setIcon(labelme.utils.newIcon("done"))
-        bb.button(bb.Cancel).setIcon(labelme.utils.newIcon("undo"))
-        bb.accepted.connect(self.validate)
-        bb.rejected.connect(self.reject)
-        layout.addWidget(bb)
-        # label_list
+        # 标签列表
         self.labelList = QtWidgets.QListWidget()
         self.labelList.setFont(QtGui.QFont("Arial", 14))
         if self._fit_to_content["row"]:
@@ -110,7 +100,38 @@ class LabelDialog(QtWidgets.QDialog):
         self.labelList.setFixedHeight(150)
         self.edit.setListWidget(self.labelList)
         layout.addWidget(self.labelList)
-        # label_flags
+
+        # 添加状态按钮（如“破损”、“完好”）
+        self.statusButtonLayout = QtWidgets.QHBoxLayout()
+        status_labels = [
+            ("严重破损", "severe damage"),
+            ("中度破损", "moderate damage"),
+            ("轻微破损", "minor damage"),
+            ("局部破损", "partial damage"),
+            ("完好", "Intact"),
+        ]
+        for status_label, status_text in status_labels:
+            status_button = QtWidgets.QPushButton(status_label)
+            status_button.setFont(QtGui.QFont("Arial", 14))
+            status_button.clicked.connect(
+                lambda checked, desc=status_text: self.setDescription(desc)
+            )
+            self.statusButtonLayout.addWidget(status_button)
+        layout.addLayout(self.statusButtonLayout)
+
+        self.ai_buttonLayout = QtWidgets.QHBoxLayout()
+        ai_button = QtWidgets.QPushButton("AI填充")
+        ai_button.setFont(QtGui.QFont("Arial", 14))
+        ai_button.clicked.connect(self.setAIFill)
+        self.ai_buttonLayout.addWidget(ai_button)
+        layout.addLayout(self.ai_buttonLayout)
+
+        # 添加标签编辑框
+        self.editLayout = QtWidgets.QHBoxLayout()
+        self.editLayout.addWidget(self.edit)
+        layout.addLayout(self.editLayout)
+
+        # 标签标记
         if flags is None:
             flags = {}
         self._flags = flags
@@ -118,14 +139,27 @@ class LabelDialog(QtWidgets.QDialog):
         self.resetFlags()
         layout.addItem(self.flagsLayout)
         self.edit.textChanged.connect(self.updateFlags)
-        # text edit
+        # 文本编辑
         self.editDescription = QtWidgets.QTextEdit()
         self.editDescription.setFont(QtGui.QFont("Arial", 14))
         self.editDescription.setPlaceholderText("Label description")
         self.editDescription.setFixedHeight(50)
         layout.addWidget(self.editDescription)
         self.setLayout(layout)
-        # completion
+
+        # 按钮
+        self.buttonBox = bb = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            QtCore.Qt.Horizontal,
+            self,
+        )
+        bb.button(bb.Ok).setIcon(labelme.utils.newIcon("done"))
+        bb.button(bb.Cancel).setIcon(labelme.utils.newIcon("undo"))
+        bb.accepted.connect(self.validate)
+        bb.rejected.connect(self.reject)
+        layout.addWidget(bb)
+
+        # 自动补全
         completer = QtWidgets.QCompleter()
         if not QT5 and completion != "startswith":
             logger.warn(
@@ -135,7 +169,7 @@ class LabelDialog(QtWidgets.QDialog):
             completion = "startswith"
         if completion == "startswith":
             completer.setCompletionMode(QtWidgets.QCompleter.InlineCompletion)
-            # Default settings.
+            # 默认设置
             # completer.setFilterMode(QtCore.Qt.MatchStartsWith)
         elif completion == "contains":
             completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
@@ -144,6 +178,25 @@ class LabelDialog(QtWidgets.QDialog):
             raise ValueError("Unsupported completion: {}".format(completion))
         completer.setModel(self.labelList.model())
         self.edit.setCompleter(completer)
+
+    def setLabel(self, text):
+        self.edit.setText(text)
+
+    def setDescription(self, description):
+        current_description = self.editDescription.toPlainText()
+        if current_description:
+            self.editDescription.setPlainText(f"{current_description}, {description}")
+        else:
+            self.editDescription.setPlainText(description)
+
+    def setAIFill(self):
+        current_description = self.editDescription.toPlainText()
+        current_label = self.edit.text()
+        text = generate_response(
+            f"影像中的{current_label} { current_description } ，请用30个字详细描述破损情况。"
+        )
+        print(text)
+        self.editDescription.setPlainText(text)
 
     def setLabelText(self, text):
         self.edit.setText(text)
@@ -179,7 +232,7 @@ class LabelDialog(QtWidgets.QDialog):
         self.edit.setText(text)
 
     def updateFlags(self, label_new):
-        # keep state of shared flags
+        # 保持共享标记的状态
         flags_old = self.getFlags()
 
         flags_new = {}
@@ -231,10 +284,10 @@ class LabelDialog(QtWidgets.QDialog):
             )
         if self._fit_to_content["column"]:
             self.labelList.setMinimumWidth(self.labelList.sizeHintForColumn(0) + 2)
-        # if text is None, the previous label in self.edit is kept
+        # 如果 text 为 None，则保留在 self.edit 中的上一个标签
         if text is None:
             text = self.edit.text()
-        # description is always initialized by empty text c.f., self.edit.text
+        # 描述始终为空文本，引用自于 self.edit.text
         if description is None:
             description = ""
         self.editDescription.setPlainText(description)

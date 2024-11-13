@@ -387,7 +387,7 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False,
         )
         createAiPolygonMode = action(
-            self.tr("利用AI创建多边形标注"),
+            self.tr("AI边界标注"),
             lambda: self.toggleDrawMode(False, createMode="ai_polygon"),
             None,
             "objects",
@@ -404,7 +404,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )
         )
         createAiMaskMode = action(
-            self.tr("AI掩码"),
+            self.tr("AI掩码标注"),
             lambda: self.toggleDrawMode(False, createMode="ai_mask"),
             None,
             "objects",
@@ -430,7 +430,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         delete = action(
-            self.tr("删除多边形标注"),
+            self.tr("删除标注"),
             self.deleteSelectedShape,
             shortcuts["delete_polygon"],
             "cancel",
