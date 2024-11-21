@@ -33,7 +33,7 @@ exe = EXE(
     upx=True,
     runtime_tmpdir=None,
     console=False,
-    icon='labelme/icons/vge.ico',
+    icon='labelme/icons/icon.ico',
 )
 app = BUNDLE(
     exe,

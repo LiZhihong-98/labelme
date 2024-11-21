@@ -6,9 +6,73 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QLineEdit,
+    QProgressBar,
 )
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIntValidator
-from labelme.utils.rs import clip_image
+from osgeo import gdal
+import os
+
+
+class ClipThread(QThread):
+    progress_signal = pyqtSignal(int, int)  # 定义进度信号，传递当前进度和总进度
+
+    def __init__(
+        self, input_file, output_prefix, block_width, block_height, overlap_percentage
+    ):
+        super(ClipThread, self).__init__()
+        self.input_file = input_file
+        self.output_prefix = output_prefix
+        self.block_width = block_width
+        self.block_height = block_height
+        self.overlap_percentage = overlap_percentage
+
+    def run(self):
+        # 执行裁切操作
+        self.clip_image(
+            self.input_file,
+            self.output_prefix,
+            self.block_width,
+            self.block_height,
+            self.overlap_percentage,
+        )
+
+    def clip_image(
+        self, input_file, output_prefix, block_width, block_height, overlap_percentage
+    ):
+        if not os.path.exists(output_prefix):
+            os.makedirs(output_prefix)
+        in_ds = gdal.Open(input_file)
+        width = in_ds.RasterXSize
+        height = in_ds.RasterYSize
+        num = 0
+
+        overlap_width = int(block_width * overlap_percentage / 100)
+        overlap_height = int(block_height * overlap_percentage / 100)
+
+        num_cols = width // (block_width - overlap_width)
+        num_rows = height // (block_height - overlap_height)
+        total_tiles = num_cols * num_rows  # 总裁切块数
+
+        for i in range(num_cols):
+            for j in range(num_rows):
+                offset_x = i * (block_width - overlap_width)
+                offset_y = j * (block_height - overlap_height)
+
+                out_filename = output_prefix + f"./{num:04d}.tiff"
+
+                gdal.Translate(
+                    out_filename,
+                    in_ds,
+                    srcWin=[offset_x, offset_y, block_width, block_height],
+                )
+                num += 1
+
+                # 发射进度信号
+                self.progress_signal.emit(num, total_tiles)
+
+        in_ds = None
+
 
 class ClipDialog(QDialog):
     def __init__(self, *args, **kwargs):
@@ -47,6 +111,12 @@ class ClipDialog(QDialog):
         button3 = QPushButton("裁切")
         button3.clicked.connect(self.cut_image)
 
+        # 创建进度条并初始隐藏
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setRange(0, 100)  # 设置进度条范围 0到100
+        self.progress_bar.setValue(0)  # 初始化为0%
+        self.progress_bar.setVisible(False)  # 初始时隐藏进度条
+
         # 创建布局并将标签和按钮添加到布局中
         layout = QVBoxLayout()
         layout.addWidget(self.image_path_label)
@@ -65,6 +135,9 @@ class ClipDialog(QDialog):
         button_layout.addWidget(button3)
 
         layout.addLayout(button_layout)
+
+        # 添加进度条到布局
+        layout.addWidget(self.progress_bar)
 
         # 设置对话框的布局
         self.setLayout(layout)
@@ -101,8 +174,23 @@ class ClipDialog(QDialog):
             print("请输入有效的宽度和高度")
             return
 
-        print(f"裁切参数: 图像路径={self.image_path}, 输出路径={self.output_path}, "
-              f"宽度={tile_width}, 高度={tile_height}, 重叠={overlap}")
+        print(
+            f"裁切参数: 图像路径={self.image_path}, 输出路径={self.output_path}, "
+            f"宽度={tile_width}, 高度={tile_height}, 重叠={overlap}"
+        )
 
-        clip_image(self.image_path, self.output_path, tile_width, tile_height, overlap)
-        self.accept()
+        # 显示进度条
+        self.progress_bar.setVisible(True)
+
+        # 创建并启动裁切线程
+        self.clip_thread = ClipThread(
+            self.image_path, self.output_path, tile_width, tile_height, overlap
+        )
+        self.clip_thread.progress_signal.connect(self.update_progress)
+        self.clip_thread.start()
+
+    def update_progress(self, current, total):
+        # 更新进度条
+        progress = int((current / total) * 100)
+        self.progress_bar.setValue(progress)
+        print(f"进度: {progress}%")

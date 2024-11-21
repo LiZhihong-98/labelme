@@ -7,7 +7,8 @@ from qtpy import QtWidgets
 
 
 import labelme.utils
-from labelme.ai.qwen25 import generate_response
+
+# from labelme.ai.qwen25 import generate_response
 from labelme.logger import logger
 
 QT5 = QT_VERSION[0] == "5"
@@ -119,12 +120,12 @@ class LabelDialog(QtWidgets.QDialog):
             self.statusButtonLayout.addWidget(status_button)
         layout.addLayout(self.statusButtonLayout)
 
-        self.ai_buttonLayout = QtWidgets.QHBoxLayout()
-        ai_button = QtWidgets.QPushButton("AI填充")
-        ai_button.setFont(QtGui.QFont("Arial", 14))
-        ai_button.clicked.connect(self.setAIFill)
-        self.ai_buttonLayout.addWidget(ai_button)
-        layout.addLayout(self.ai_buttonLayout)
+        # self.ai_buttonLayout = QtWidgets.QHBoxLayout()
+        # ai_button = QtWidgets.QPushButton("AI填充")
+        # ai_button.setFont(QtGui.QFont("Arial", 14))
+        # ai_button.clicked.connect(self.setAIFill)
+        # self.ai_buttonLayout.addWidget(ai_button)
+        # layout.addLayout(self.ai_buttonLayout)
 
         # 添加标签编辑框
         self.editLayout = QtWidgets.QHBoxLayout()
@@ -189,14 +190,14 @@ class LabelDialog(QtWidgets.QDialog):
         else:
             self.editDescription.setPlainText(description)
 
-    def setAIFill(self):
-        current_description = self.editDescription.toPlainText()
-        current_label = self.edit.text()
-        text = generate_response(
-            f"影像中的{current_label} { current_description } ，请用30个字详细描述破损情况。"
-        )
-        print(text)
-        self.editDescription.setPlainText(text)
+    # def setAIFill(self):
+    #     current_description = self.editDescription.toPlainText()
+    #     current_label = self.edit.text()
+    #     text = generate_response(
+    #         f"影像中的{current_label} is { current_description } ，请用30个字详细描述破损情况。"
+    #     )
+    #     print(text)
+    #     self.editDescription.setPlainText(text)
 
     def setLabelText(self, text):
         self.edit.setText(text)

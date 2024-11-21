@@ -35,6 +35,11 @@ from labelme.widgets import UniqueLabelQListWidget
 from labelme.widgets import ZoomWidget
 from labelme.widgets import ClipDialog
 from labelme.widgets import ConvertDialog
+import datetime
+import sys
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 
 from . import utils
 
@@ -50,6 +55,7 @@ LABEL_COLORMAP = imgviz.label_colormap()
 
 class MainWindow(QtWidgets.QMainWindow):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = 0, 1, 2
+    END_DATE = datetime.datetime(2025, 2, 1)
 
     def __init__(
         self,
@@ -59,6 +65,11 @@ class MainWindow(QtWidgets.QMainWindow):
         output_file=None,
         output_dir=None,
     ):
+
+        if self.is_expired():
+            print("License expired")
+            sys.exit()  # 退出程序
+
         if output is not None:
             logger.warning("argument output is deprecated, use output_file instead")
             if output_file is None:
@@ -239,18 +250,26 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Open RSImage"),
         )
         clipRSImg = action(
-            self.tr("裁切遥感影像"),
+            self.tr("影像裁切"),
             self.openClipRSImgDialog,
             shortcuts["open_rsimg"],
             "clip",
             self.tr("Clip RSImage"),
         )
         convertRSImg = action(
-            self.tr("转换遥感影像"),
+            self.tr("影像转换"),
             self.openConvertRSImgDialog,
             shortcuts["open_rsimg"],
             "convert",
             self.tr("Convert RSImage"),
+        )
+        stop = action(
+            self.tr("停止绘制"),
+            self.stopDrawing,
+            shortcuts["open_rsimg"],
+            "stop",
+            self.tr("Stop drawing"),
+            enabled=False,
         )
         openNextImg = action(
             self.tr("上一张"),
@@ -580,7 +599,7 @@ class MainWindow(QtWidgets.QMainWindow):
             shortcuts["fit_window"],
             "fit-window",
             self.tr("Zoom follows window size"),
-            checkable=True,
+            checkable=False,
             enabled=False,
         )
         fitWidth = action(
@@ -673,6 +692,7 @@ class MainWindow(QtWidgets.QMainWindow):
             createLineStripMode=createLineStripMode,
             createAiPolygonMode=createAiPolygonMode,
             createAiMaskMode=createAiMaskMode,
+            stop=stop,
             zoom=zoom,
             zoomIn=zoomIn,
             zoomOut=zoomOut,
@@ -863,10 +883,12 @@ class MainWindow(QtWidgets.QMainWindow):
             deleteFile,
             None,
             createAiMaskMode,
+            createRectangleMode,
             editMode,
             # duplicate,
             delete,
             undo,
+            # stop,
             # brightnessContrast,
             None,
             fitWindow,
@@ -939,6 +961,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.firstStart = True
         # if self.firstStart:
         #    QWhatsThis.enterWhatsThisMode()
+
+    def is_expired(self):
+        """检查当前日期是否超过截止日期"""
+        current_date = datetime.datetime.now()
+        return current_date > self.END_DATE
 
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
@@ -1077,6 +1104,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.undoLastPoint.setEnabled(drawing)
         self.actions.undo.setEnabled(not drawing)
         self.actions.delete.setEnabled(not drawing)
+
+    def stopDrawing(self):
+        draw_actions = {
+            "polygon": self.actions.createMode,
+            "rectangle": self.actions.createRectangleMode,
+            "circle": self.actions.createCircleMode,
+            "point": self.actions.createPointMode,
+            "line": self.actions.createLineMode,
+            "linestrip": self.actions.createLineStripMode,
+            "ai_polygon": self.actions.createAiPolygonMode,
+            "ai_mask": self.actions.createAiMaskMode,
+        }
+        for draw_action in draw_actions.values():
+            draw_action.setEnabled(True)
 
     def toggleDrawMode(self, edit=True, createMode="polygon"):
         draw_actions = {
@@ -1256,11 +1297,11 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         item = items[0]
 
-        if not self.mayContinue():
-            print("fileSelectionChanged: mayContinue() is False")
-            return
-        else:
-            print("fileSelectionChanged: mayContinue() is True")
+        # if not self.mayContinue():
+        #     print("fileSelectionChanged: mayContinue() is False")
+        #     return
+        # else:
+        #     print("fileSelectionChanged: mayContinue() is True")
 
         currIndex = self.imageList.index(str(item.text()))
         if currIndex < len(self.imageList):
@@ -1400,64 +1441,6 @@ class MainWindow(QtWidgets.QMainWindow):
             item.setCheckState(Qt.Checked if flag else Qt.Unchecked)
             self.flag_widget.addItem(item)
 
-    # def saveLabels(self, filename):
-    #     lf = LabelFile()
-
-    #     def format_shape(s):
-    #         data = s.other_data.copy()
-    #         data.update(
-    #             dict(
-    #                 label=s.label.encode("utf-8") if PY2 else s.label,
-    #                 points=[(p.x(), p.y()) for p in s.points],
-    #                 group_id=s.group_id,
-    #                 description=s.description,
-    #                 shape_type=s.shape_type,
-    #                 flags=s.flags,
-    #                 mask=(
-    #                     None
-    #                     if s.mask is None
-    #                     else utils.img_arr_to_b64(s.mask.astype(np.uint8))
-    #                 ),
-    #             )
-    #         )
-    #         return data
-
-    #     shapes = [format_shape(item.shape()) for item in self.labelList]
-    #     flags = {}
-    #     for i in range(self.flag_widget.count()):
-    #         item = self.flag_widget.item(i)
-    #         key = item.text()
-    #         flag = item.checkState() == Qt.Checked
-    #         flags[key] = flag
-    #     try:
-    #         imagePath = osp.relpath(self.imagePath, osp.dirname(filename))
-    #         imageData = self.imageData if self._config["store_data"] else None
-    #         if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
-    #             os.makedirs(osp.dirname(filename))
-    #         lf.save(
-    #             filename=filename,
-    #             shapes=shapes,
-    #             imagePath=imagePath,
-    #             imageData=imageData,
-    #             imageHeight=self.image.height(),
-    #             imageWidth=self.image.width(),
-    #             otherData=self.otherData,
-    #             flags=flags,
-    #         )
-    #         self.labelFile = lf
-    #         items = self.fileListWidget.findItems(self.imagePath, Qt.MatchExactly)
-    #         if len(items) > 0:
-    #             if len(items) != 1:
-    #                 raise RuntimeError("There are duplicate files.")
-    #             items[0].setCheckState(Qt.Checked)
-    #         # disable allows next and previous image to proceed
-    #         # self.filename = filename
-    #         return True
-    #     except LabelFileError as e:
-    #         self.errorMessage(
-    #             self.tr("Error saving label data"), self.tr("<b>%s</b>") % e
-    #         )
-    #         return False
     def saveLabels(self, filename):
         lf = LabelFile()
 
