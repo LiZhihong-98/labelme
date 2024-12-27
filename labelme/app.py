@@ -358,7 +358,7 @@ class MainWindow(QtWidgets.QMainWindow):
         toggle_keep_prev_mode.setChecked(self._config["keep_prev"])
 
         createMode = action(
-            self.tr("创建模式"),
+            self.tr("创建多边形标注"),
             lambda: self.toggleDrawMode(False, createMode="polygon"),
             shortcuts["create_polygon"],
             "objects",
@@ -882,6 +882,7 @@ class MainWindow(QtWidgets.QMainWindow):
             save,
             deleteFile,
             None,
+            createMode,
             createAiMaskMode,
             createRectangleMode,
             editMode,

@@ -12,6 +12,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIntValidator
 from osgeo import gdal
 import os
+import re
 
 
 class ClipThread(QThread):
@@ -40,12 +41,22 @@ class ClipThread(QThread):
     def clip_image(
         self, input_file, output_prefix, block_width, block_height, overlap_percentage
     ):
+        # 如果输出目录不存在，则创建
         if not os.path.exists(output_prefix):
             os.makedirs(output_prefix)
+
+        # 计算已有的裁切文件数量，从而确定下一个图像的起始编号
+        existing_files = [
+            f
+            for f in os.listdir(output_prefix)
+            if re.match(r"\d{4}\.tiff$", f)  # 匹配形如 "0001.tiff" 的文件
+        ]
+        num = len(existing_files)
+
+        # 打开输入文件
         in_ds = gdal.Open(input_file)
         width = in_ds.RasterXSize
         height = in_ds.RasterYSize
-        num = 0
 
         overlap_width = int(block_width * overlap_percentage / 100)
         overlap_height = int(block_height * overlap_percentage / 100)
@@ -59,7 +70,7 @@ class ClipThread(QThread):
                 offset_x = i * (block_width - overlap_width)
                 offset_y = j * (block_height - overlap_height)
 
-                out_filename = output_prefix + f"./{num:04d}.tiff"
+                out_filename = output_prefix + f"/{num:04d}.tiff"
 
                 gdal.Translate(
                     out_filename,
@@ -79,6 +90,7 @@ class ClipDialog(QDialog):
         super(ClipDialog, self).__init__(*args, **kwargs)
         self.image_path = ""
         self.output_path = ""
+        self.clip_thread = None  # 初始化线程变量
         self.init_ui()
 
     def init_ui(self):
@@ -179,8 +191,14 @@ class ClipDialog(QDialog):
             f"宽度={tile_width}, 高度={tile_height}, 重叠={overlap}"
         )
 
-        # 显示进度条
+        # 重置进度条状态
+        self.progress_bar.setValue(0)
         self.progress_bar.setVisible(True)
+
+        # 确保每次点击裁切按钮时，创建新的线程对象
+        if self.clip_thread is not None:
+            self.clip_thread.quit()
+            self.clip_thread.wait()
 
         # 创建并启动裁切线程
         self.clip_thread = ClipThread(
